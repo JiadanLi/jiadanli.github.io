@@ -1,0 +1,1033 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>班主任工作台｜交互演示（模拟数据）</title>
+<style>
+:root{
+  --bg:#f4f6fa; --card:#ffffff; --border:#e5e9f0; --text:#2b3445; --sub:#7a8599;
+  --blue:#3b82f6; --blue-l:#eaf2fe; --green:#16a34a; --green-l:#e9f7ee;
+  --red:#dc2626; --red-l:#fdecec; --orange:#ea8a1f; --orange-l:#fdf3e7;
+  --purple:#7c5cd6; --purple-l:#f1edfb; --teal:#0d9488; --teal-l:#e6f5f3;
+  --radius:12px; --shadow:0 1px 3px rgba(30,40,60,.06),0 4px 14px rgba(30,40,60,.05);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:"PingFang SC","Microsoft YaHei",system-ui,sans-serif;background:var(--bg);color:var(--text);font-size:14px}
+.app{display:flex;min-height:100vh}
+/* ---------- 侧边栏 ---------- */
+.sidebar{width:210px;background:#fff;border-right:1px solid var(--border);padding:18px 12px;position:sticky;top:0;height:100vh;display:flex;flex-direction:column;gap:4px;flex-shrink:0}
+.logo{font-size:16px;font-weight:700;padding:6px 10px 16px;line-height:1.4}
+.logo small{display:block;font-size:11px;color:var(--sub);font-weight:400;margin-top:2px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;cursor:pointer;color:var(--sub);font-weight:500;transition:.15s}
+.nav-item:hover{background:#f2f5fa;color:var(--text)}
+.nav-item.active{background:var(--blue-l);color:var(--blue)}
+.nav-item .ico{width:20px;text-align:center}
+.nav-item .badge{margin-left:auto;background:var(--red);color:#fff;font-size:11px;border-radius:8px;padding:1px 7px}
+.sidebar .foot{margin-top:auto;padding:10px 12px;font-size:11px;color:var(--sub);line-height:1.6;border-top:1px dashed var(--border)}
+/* ---------- 主区 ---------- */
+.main{flex:1;padding:22px 26px;max-width:1280px}
+.view{display:none}
+.view.active{display:block}
+.page-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px}
+.page-head h2{font-size:19px}
+.page-head .desc{font-size:12px;color:var(--sub);margin-top:4px;font-weight:400}
+.btn{display:inline-flex;align-items:center;gap:6px;border:none;border-radius:9px;padding:8px 14px;font-size:13px;cursor:pointer;font-weight:500;transition:.15s;font-family:inherit}
+.btn-primary{background:var(--blue);color:#fff}
+.btn-primary:hover{background:#2f74e8}
+.btn-plain{background:#fff;border:1px solid var(--border);color:var(--text)}
+.btn-plain:hover{border-color:var(--blue);color:var(--blue)}
+.btn-green{background:var(--green);color:#fff}
+.btn-red{background:var(--red-l);color:var(--red)}
+.btn-sm{padding:4px 10px;font-size:12px;border-radius:7px}
+.card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);border:1px solid var(--border)}
+.tag{display:inline-flex;align-items:center;font-size:11px;border-radius:6px;padding:2px 8px;margin:2px 3px 2px 0;font-weight:500}
+/* ---------- 仪表盘 ---------- */
+.stat-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:18px}
+.stat{padding:16px;border-radius:var(--radius);cursor:default}
+.stat .num{font-size:28px;font-weight:700;line-height:1.2}
+.stat .lbl{font-size:12px;margin-top:4px;color:var(--sub)}
+.stat.warn .num{color:var(--red)} .stat.ok .num{color:var(--green)} .stat.info .num{color:var(--blue)} .stat.pur .num{color:var(--purple)} .stat.org .num{color:var(--orange)}
+.dash-cols{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.panel{padding:16px}
+.panel h3{font-size:14px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between}
+.panel h3 .more{font-size:12px;color:var(--blue);cursor:pointer;font-weight:400}
+.todo-line{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;background:#f8fafc;margin-bottom:8px;font-size:13px}
+.todo-line.done{opacity:.5;text-decoration:line-through}
+.pri{font-size:11px;padding:1px 7px;border-radius:6px;font-weight:500}
+.pri-高{background:var(--red-l);color:var(--red)} .pri-中{background:var(--orange-l);color:var(--orange)} .pri-低{background:var(--blue-l);color:var(--blue)}
+.empty{color:var(--sub);font-size:13px;text-align:center;padding:26px 10px;line-height:1.8}
+/* ---------- 座位 ---------- */
+.seat-toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+.toolbar-card{padding:12px 14px;display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+select,input[type=text],input[type=date],input[type=datetime-local],input[type=tel],textarea{
+  border:1px solid var(--border);border-radius:8px;padding:7px 10px;font-size:13px;font-family:inherit;background:#fff;color:var(--text);outline:none}
+select:focus,input:focus,textarea:focus{border-color:var(--blue)}
+textarea{resize:vertical;min-height:64px}
+label.f{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--sub);font-weight:500}
+.seat-area{display:flex;gap:18px;flex-wrap:wrap;align-items:flex-start}
+.classroom{flex:1;min-width:640px;padding:18px}
+.board-bar{background:#f1f5f9;border-radius:8px;text-align:center;padding:6px;font-size:12px;color:var(--sub);margin-bottom:16px;letter-spacing:2px}
+.groups-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.group{background:#f8fafc;border:1.5px solid var(--border);border-radius:10px;padding:10px}
+.group-title{text-align:center;font-size:12px;font-weight:600;color:var(--blue);margin-bottom:8px}
+.group .rowpair{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px}
+.row-label{font-size:10px;color:var(--sub);text-align:center;margin:-3px 0 4px}
+.seat{background:#fff;border:1.5px solid var(--border);border-radius:8px;min-height:44px;padding:5px 6px;font-size:12px;cursor:grab;position:relative;transition:.12s;overflow:hidden}
+.seat:hover{border-color:var(--blue);box-shadow:0 0 0 2px var(--blue-l)}
+.seat.filled{background:#eef4ff}
+.seat .sname{font-weight:600;font-size:13px;white-space:nowrap;text-overflow:ellipsis;overflow:hidden}
+.seat .stags{font-size:10px;color:var(--orange);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.seat.single-desk{border-style:dashed;border-color:var(--teal);background:var(--teal-l)}
+.seat.single-desk.filled{background:#d9efec}
+.seat .corner{position:absolute;top:3px;right:5px;font-size:9px;color:var(--teal);font-weight:600}
+.seat.drag-over{border-style:dashed;border-color:var(--blue);background:var(--blue-l)}
+.pool{width:250px;flex-shrink:0}
+.pool .pool-box{padding:12px;max-height:520px;overflow:auto}
+.pool-item{background:#fff;border:1px solid var(--border);border-radius:8px;padding:7px 10px;margin-bottom:7px;font-size:13px;cursor:grab;display:flex;justify-content:space-between;align-items:center}
+.pool-item:hover{border-color:var(--blue);background:var(--blue-l)}
+.pool-item .pt{font-size:10px;color:var(--orange)}
+.legend{font-size:11px;color:var(--sub);margin-top:12px;display:flex;gap:16px;flex-wrap:wrap}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:4px;vertical-align:-2px;margin-right:4px;border:1.5px solid var(--border)}
+.seat-table-wrap,.list-wrap{overflow:auto;margin-top:14px}
+table.tbl{width:100%;border-collapse:collapse;background:#fff;font-size:13px}
+.tbl th{background:#f7f9fc;color:var(--sub);font-size:12px;font-weight:600;text-align:left;padding:9px 12px;border-bottom:1px solid var(--border);white-space:nowrap}
+.tbl td{padding:9px 12px;border-bottom:1px solid #eef1f6;vertical-align:top}
+.tbl tr:hover td{background:#fafcff}
+/* ---------- 待办 ---------- */
+.todo-item{display:flex;gap:12px;padding:13px 16px;border-bottom:1px solid #eef1f6;align-items:flex-start}
+.todo-item:last-child{border-bottom:none}
+.todo-check{width:20px;height:20px;border-radius:6px;border:2px solid var(--border);cursor:pointer;flex-shrink:0;margin-top:2px;display:flex;align-items:center;justify-content:center;font-size:12px;color:#fff}
+.todo-item.st-已完成 .todo-check{background:var(--green);border-color:var(--green)}
+.todo-item.st-进行中 .todo-check{background:var(--orange);border-color:var(--orange)}
+.todo-item.overdue .todo-title{color:var(--red)}
+.todo-title{font-weight:600;font-size:14px}
+.todo-meta{font-size:12px;color:var(--sub);margin-top:4px;display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.todo-repeat{background:var(--purple-l);color:var(--purple);font-size:11px;padding:1px 7px;border-radius:6px}
+.todo-act{margin-left:auto;display:flex;gap:6px;flex-shrink:0}
+/* ---------- 档案卡片 ---------- */
+.stu-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(215px,1fr));gap:14px}
+.stu-card{padding:14px;cursor:pointer;transition:.15s;position:relative}
+.stu-card:hover{transform:translateY(-2px);box-shadow:0 6px 18px rgba(30,40,60,.1)}
+.stu-card .avatar{width:38px;height:38px;border-radius:50%;background:var(--blue-l);color:var(--blue);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px}
+.stu-card .nm{font-weight:700;font-size:15px;margin-top:8px}
+.stu-card .meta{font-size:11px;color:var(--sub);margin-top:3px;line-height:1.6}
+.focus-flag{position:absolute;top:10px;right:10px;font-size:10px;background:var(--red-l);color:var(--red);padding:2px 7px;border-radius:6px;font-weight:600}
+/* ---------- 记录 ---------- */
+.seg{display:inline-flex;background:#eef1f6;border-radius:10px;padding:3px;margin-bottom:14px}
+.seg button{border:none;background:transparent;padding:7px 18px;border-radius:8px;font-size:13px;cursor:pointer;color:var(--sub);font-family:inherit;font-weight:500}
+.seg button.active{background:#fff;color:var(--blue);font-weight:600;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.rec-card{padding:14px 16px;border-bottom:1px solid #eef1f6}
+.rec-card:last-child{border:none}
+.rec-head{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.rec-head .who{font-weight:700;font-size:14px;cursor:pointer;color:var(--blue)}
+.rec-body{font-size:13px;margin-top:7px;line-height:1.7;color:#44506a}
+.rec-fields{font-size:12px;color:var(--sub);margin-top:6px;line-height:1.8}
+.rec-actions{margin-top:8px;display:flex;gap:6px}
+.type-chip{font-size:11px;padding:2px 8px;border-radius:6px;font-weight:500}
+.positive .type-chip{background:var(--green-l);color:var(--green)}
+.timeline{margin-top:10px;border-left:2px solid var(--border);padding-left:14px;margin-left:4px}
+.timeline .tl-item{position:relative;padding:4px 0 8px;font-size:12px;color:var(--sub);line-height:1.7}
+.timeline .tl-item::before{content:"";position:absolute;left:-19px;top:11px;width:8px;height:8px;border-radius:50%;background:var(--orange)}
+.timeline .tl-item b{color:var(--text)}
+/* ---------- 弹窗 ---------- */
+.modal-mask{position:fixed;inset:0;background:rgba(20,28,45,.45);display:none;align-items:flex-start;justify-content:center;z-index:100;overflow:auto;padding:40px 16px}
+.modal-mask.show{display:flex}
+.modal{background:#fff;border-radius:14px;width:640px;max-width:100%;padding:22px 24px;box-shadow:0 20px 60px rgba(0,0,0,.2)}
+.modal h3{font-size:16px;margin-bottom:16px}
+.modal .frm{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.modal .frm .full{grid-column:1/-1}
+.modal-foot{margin-top:18px;display:flex;justify-content:flex-end;gap:8px}
+.chk-row{display:flex;gap:8px;flex-wrap:wrap}
+.chk{border:1px solid var(--border);border-radius:8px;padding:5px 11px;font-size:12px;cursor:pointer;user-select:none;background:#fff}
+.chk.on{background:var(--blue-l);border-color:var(--blue);color:var(--blue);font-weight:600}
+.detail-kv{display:grid;grid-template-columns:1fr 1fr;gap:10px 20px;margin-bottom:14px;font-size:13px}
+.detail-kv .k{color:var(--sub);font-size:12px}
+.detail-kv .v{margin-top:2px;line-height:1.6}
+@media (max-width:1100px){.stat-grid{grid-template-columns:repeat(2,1fr)}.dash-cols{grid-template-columns:1fr}.groups-row{grid-template-columns:repeat(2,1fr)}}
+/* ---------- AI 待办助手 ---------- */
+.ai-state{padding:10px 12px;border-radius:8px;font-size:13px;margin-top:10px;line-height:1.7}
+.ai-state.loading{background:var(--blue-l);color:var(--blue)}
+.ai-state.error{background:var(--red-l);color:var(--red)}
+.ai-card{border:1.5px solid var(--border);border-radius:10px;padding:12px;margin-top:10px;background:#f8fafc}
+.ai-card.confirm-flag{border-color:var(--orange);background:var(--orange-l)}
+.ai-card .ac-head{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.ai-card .ac-head .no{font-weight:700;color:var(--blue);font-size:13px}
+.ai-card .frm{display:grid;grid-template-columns:2fr 1fr 1fr;gap:8px}
+.ai-card .frm .full{grid-column:1/-1}
+.confirm-chip{font-size:11px;background:var(--orange);color:#fff;border-radius:6px;padding:2px 8px;font-weight:600}
+</style>
+</head>
+<body>
+<div id="public-demo-banner" style="position:sticky;top:0;z-index:1000;background:#143d38;color:#fff;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:9px 18px;font:13px system-ui;flex-wrap:wrap"><span><b>交互演示版</b> · 使用虚构数据。座位、档案、待办可实际操作；AI 任务解析为<b>规则模拟</b>，不是在线大模型。请勿输入真实学生信息。</span><a href="teacher.html" style="color:white;text-decoration:underline">返回案例介绍 ↗</a></div>
+<div class="app">
+  <div class="sidebar">
+    <div class="logo">📚 班主任工作台<small>一年级 · 班级日常管理</small></div>
+    <div class="nav-item active" data-view="dash"><span class="ico">🏠</span>首页仪表盘<span class="badge" id="navDashBadge" style="display:none"></span></div>
+    <div class="nav-item" data-view="seat"><span class="ico">🪑</span>座位管理</div>
+    <div class="nav-item" data-view="todo"><span class="ico">✅</span>日常待办提醒</div>
+    <div class="nav-item" data-view="stu"><span class="ico">👶</span>学生档案总库</div>
+    <div class="nav-item" data-view="rec"><span class="ico">📝</span>成长 &amp; 问题留痕</div>
+    <div class="foot">数据自动保存在本机浏览器<br>建议每月在首页导出一次备份</div>
+  </div>
+  <div class="main">
+
+    <!-- ===== 首页仪表盘 ===== -->
+    <div class="view active" id="view-dash">
+      <div class="page-head">
+        <div><h2>今日概览 <span id="dashDate" style="font-size:13px;color:var(--sub);font-weight:400"></span></h2>
+        <div class="desc">一眼看清今天的班级事务与需要关注的孩子</div></div>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-plain btn-sm" onclick="exportData()">⬇ 导出备份</button>
+          <button class="btn btn-plain btn-sm" onclick="document.getElementById('importFile').click()">⬆ 恢复备份</button>
+          <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(this)">
+        </div>
+      </div>
+      <div class="stat-grid">
+        <div class="card stat info"><div class="num" id="stToday">0</div><div class="lbl">今日待办</div></div>
+        <div class="card stat warn"><div class="num" id="stOverdue">0</div><div class="lbl">待办预警（已过期未完成）</div></div>
+        <div class="card stat pur"><div class="num" id="stFocus">0</div><div class="lbl">重点关注学生</div></div>
+        <div class="card stat ok"><div class="num" id="stWeekRec">0</div><div class="lbl">本周新增学生记录</div></div>
+        <div class="card stat org"><div class="num" id="stUnfollow">0</div><div class="lbl">未跟进的问题事件</div></div>
+      </div>
+      <div class="dash-cols">
+        <div class="card panel">
+          <h3>📋 今日待办 <span class="more" onclick="switchView('todo')">进入待办 →</span></h3>
+          <div id="dashToday"></div>
+        </div>
+        <div class="card panel">
+          <h3>⚠️ 需要关注 <span class="more" onclick="switchView('rec')">查看记录 →</span></h3>
+          <div id="dashFocus"></div>
+        </div>
+      </div>
+      <div class="card panel" style="margin-top:16px">
+        <h3>🔧 数据管理</h3>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-plain btn-sm" onclick="loadDemo()">载入示例数据（体验用）</button>
+          <button class="btn btn-red btn-sm" onclick="clearAll()">清空全部数据</button>
+          <span style="font-size:12px;color:var(--sub);align-self:center">示例数据仅用于体验，可随时清空后正式使用</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== 座位管理 ===== -->
+    <div class="view" id="view-seat">
+      <div class="page-head">
+        <div><h2>座位管理</h2><div class="desc">4大组（每组2列同桌 × 6排）+ 2个单人桌 · 拖拽学生即可调座，自动记录调座日志</div></div>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-primary" onclick="openImport()">📥 一键导入学生名单</button>
+          <button class="btn btn-plain" id="seatViewToggle" onclick="toggleSeatView()">切换表格视图</button>
+        </div>
+      </div>
+      <div class="card toolbar-card">
+        <b style="font-size:13px">筛选：</b>
+        <select id="filterTag" onchange="renderSeats()"><option value="">全部标签</option></select>
+        <select id="filterGroup" onchange="renderSeats()"><option value="">全部组别</option><option value="1">第1组</option><option value="2">第2组</option><option value="3">第3组</option><option value="4">第4组</option><option value="single">单人桌</option><option value="pool">备选池</option></select>
+        <input type="text" id="filterName" placeholder="搜索学生姓名" style="width:150px" oninput="renderSeats()">
+        <button class="btn btn-plain btn-sm" onclick="openSeatLog()">📜 调座日志（<span id="logCount">0</span>）</button>
+      </div>
+      <div class="seat-area">
+        <div class="card classroom" id="seatMapWrap">
+          <div class="board-bar">讲　台</div>
+          <div class="groups-row" id="seatGroups"></div>
+          <div style="margin-top:14px">
+            <div style="font-size:12px;color:var(--teal);font-weight:600;margin-bottom:8px">单人桌（特殊安排）</div>
+            <div style="display:flex;gap:12px">
+              <div class="seat single-desk" style="width:130px" data-seat="s1"><span class="corner">单人桌1</span></div>
+              <div class="seat single-desk" style="width:130px" data-seat="s2"><span class="corner">单人桌2</span></div>
+            </div>
+          </div>
+          <div class="legend">
+            <span><i style="background:#eef4ff"></i>已安排学生</span>
+            <span><i style="background:#fff"></i>空座位</span>
+            <span><i style="background:#e6f5f3;border-color:#0d9488;border-style:dashed"></i>单人桌</span>
+            <span>从讲台方向看，从右往左依次为第1、2、3、4组</span>
+            <span>座位名称：1组-2列-3排 → 行方向为"排"，前后为排、左右同桌两列</span>
+          </div>
+        </div>
+        <div class="card pool">
+          <div style="padding:12px 14px;border-bottom:1px solid var(--border);font-weight:600;font-size:13px;display:flex;justify-content:space-between">📦 座位备选池<span id="poolCount" style="color:var(--sub);font-weight:400"></span></div>
+          <div class="pool-box" id="poolBox"></div>
+        </div>
+      </div>
+      <div class="card seat-table-wrap" id="seatTableView" style="display:none"></div>
+    </div>
+
+    <!-- ===== 日常待办 ===== -->
+    <div class="view" id="view-todo">
+      <div class="page-head">
+        <div><h2>日常待办提醒</h2><div class="desc">支持每周 / 每月重复事项，完成后自动归档可回看</div></div>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-primary" onclick="openAiTodo()">🤖 AI 快速创建待办</button>
+          <button class="btn btn-plain" style="border-color:var(--blue);color:var(--blue)" onclick="openTodo()">＋ 新增待办</button>
+        </div>
+      </div>
+      <div class="card toolbar-card">
+        <b style="font-size:13px">筛选：</b>
+        <select id="todoFilterType"><option value="">全部类型</option></select>
+        <select id="todoFilterPri"><option value="">全部优先级</option><option>高</option><option>中</option><option>低</option></select>
+        <select id="todoFilterStatus"><option value="">全部状态</option><option>未开始</option><option>进行中</option><option>已完成</option></select>
+        <select id="todoFilterTime" onchange="renderTodos()">
+          <option value="">全部时间</option><option value="today">今天</option><option value="week">本周</option><option value="overdue">已过期</option>
+        </select>
+        <input type="text" id="todoSearch" placeholder="搜索标题关键词" style="width:160px" oninput="renderTodos()">
+        <button class="btn btn-plain btn-sm" onclick="renderTodos()">查询</button>
+      </div>
+      <div class="card" style="margin-top:14px"><div id="todoList"></div></div>
+    </div>
+
+    <!-- ===== 学生档案 ===== -->
+    <div class="view" id="view-stu">
+      <div class="page-head">
+        <div><h2>学生档案总库</h2><div class="desc">一人一档 · 表现记录与问题记录全部关联到学生，点击卡片查看该生全部历史</div></div>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-primary" onclick="openImport()">📥 一键导入学生名单</button>
+          <button class="btn btn-plain" onclick="openStudent()" style="border-color:var(--blue);color:var(--blue)">＋ 新建学生档案</button>
+        </div>
+      </div>
+      <div class="card toolbar-card">
+        <input type="text" id="stuSearch" placeholder="搜索姓名 / 学号" style="width:200px" oninput="renderStudents()">
+        <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer"><input type="checkbox" id="stuFocusOnly" onchange="renderStudents()">只看特殊关注学生</label>
+        <select id="stuSort" onchange="renderStudents()"><option value="no">按学号排序</option><option value="name">按姓名排序</option><option value="date">按建档日期排序</option></select>
+      </div>
+      <div class="stu-grid" id="stuGrid" style="margin-top:14px"></div>
+    </div>
+
+    <!-- ===== 记录 ===== -->
+    <div class="view" id="view-rec">
+      <div class="page-head">
+        <div><h2>学生成长 &amp; 问题留痕记录</h2><div class="desc">表现记录以正向为主 · 问题留痕客观写实、只增改不删除，形成完整事件时间线</div></div>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-green" onclick="openGrowth()">＋ 新增表现记录</button>
+          <button class="btn btn-primary" onclick="openProblem()">＋ 新增问题留痕</button>
+        </div>
+      </div>
+      <div class="seg">
+        <button id="segG" class="active" onclick="switchRecTab('g')">🌱 表现记录</button>
+        <button id="segP" onclick="switchRecTab('p')">⚠️ 问题留痕台账</button>
+      </div>
+      <div class="card toolbar-card">
+        <select id="recFilterStu" onchange="renderRecords()"><option value="">全部学生</option></select>
+        <select id="recFilterType" onchange="renderRecords()"><option value="">全部类型</option></select>
+        <select id="recFilterParent" onchange="renderRecords()"><option value="">家长沟通：全部</option><option value="no">未沟通</option><option value="yes">已沟通</option></select>
+        <select id="recSort" onchange="renderRecords()"><option value="desc">按日期 最新在前</option><option value="asc">按日期 最早在前</option></select>
+        <input type="text" id="recSearch" placeholder="搜索内容关键词" style="width:170px" oninput="renderRecords()">
+      </div>
+      <div class="card" style="margin-top:14px"><div id="recList"></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- 弹窗 -->
+<div class="modal-mask" id="modal"><div class="modal" id="modalBody"></div></div>
+
+<script>
+/* ================= 数据层 ================= */
+const KEY='bzr_portfolio_public_demo_2026_v1';
+const TAGS=['视力保护','需要重点关注','同桌互助','调皮好动'];
+let DB={students:[],seats:{},seatLogs:[],todos:[],growth:[],problems:[]};
+let seatViewTable=false, recTab='g';
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+const today=()=>new Date().toISOString().slice(0,10);
+function save(){localStorage.setItem(KEY,JSON.stringify(DB))}
+function load(){try{const d=JSON.parse(localStorage.getItem(KEY));if(d)DB=Object.assign({students:[],seats:{},seatLogs:[],todos:[],growth:[],problems:[]},d)}catch(e){}}
+load();
+const esc=s=>(s==null?'':String(s)).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const $=id=>document.getElementById(id);
+const stuById=id=>DB.students.find(s=>s.id===id);
+const fmtDate=d=>d?d.replace(/T/,' '):'';
+function toast(msg){const m=$('modal');m.classList.add('show');$('modalBody').innerHTML=`<div style="text-align:center;padding:10px 0"><div style="font-size:34px">✅</div><p style="margin:10px 0 16px;font-size:14px">${esc(msg)}</p><button class="btn btn-primary" onclick="closeModal()">好的</button></div>`;setTimeout(()=>{if(m.classList.contains('show'))closeModal()},1600)}
+
+/* 座位结构：4组 × 2列(a/b同桌) × 6排 + 2单人桌 */
+const GROUPS=4, COLS=['a','b'], ROWS=6;
+function allSeatIds(){const ids=[];for(let g=1;g<=GROUPS;g++)for(const c of COLS)for(let r=1;r<=ROWS;r++)ids.push(`g${g}-${c}-${r}`);ids.push('s1','s2');return ids}
+function seatName(id){
+  if(id==='s1')return '单人桌1'; if(id==='s2')return '单人桌2';
+  const[m,g,c,r]=id.split('-');return `${g}组-${c==='a'?'左列':'右列'}-${r}排`;
+}
+function seatGroup(id){return id.startsWith('g')?id.split('-')[1]:'single'}
+
+/* ================= 导航 ================= */
+function switchView(v){
+  document.querySelectorAll('.view').forEach(el=>el.classList.remove('active'));
+  $('view-'+v).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(el=>el.classList.toggle('active',el.dataset.view===v));
+  if(v==='dash')renderDash(); if(v==='seat')renderSeats(); if(v==='todo')renderTodos();
+  if(v==='stu')renderStudents(); if(v==='rec')renderRecords();
+}
+document.querySelectorAll('.nav-item').forEach(el=>el.onclick=()=>switchView(el.dataset.view));
+function openModal(html){$('modalBody').innerHTML=html;$('modal').classList.add('show')}
+function closeModal(){$('modal').classList.remove('show')}
+$('modal').addEventListener('click',e=>{if(e.target===$('modal'))closeModal()});
+
+/* ================= 仪表盘 ================= */
+function weekStart(){const d=new Date();const w=(d.getDay()+6)%7;d.setDate(d.getDate()-w);return d.toISOString().slice(0,10)}
+function todoDueToday(t){
+  const td=today();
+  if(t.repeat==='weekly')return (t.repeatWeek%7)===new Date().getDay();
+  if(t.repeat==='monthly')return t.repeatDay===new Date().getDate();
+  return t.due===td;
+}
+function isOverdue(t){if(t.status==='已完成')return false;if(t.repeat!=='none')return false;return t.due&&t.due<today()}
+function renderDash(){
+  const wd=['日','一','二','三','四','五','六'][new Date().getDay()];
+  $('dashDate').textContent=`· ${today()} 星期${wd}`;
+  const open=DB.todos.filter(t=>t.status!=='已完成');
+  const nToday=open.filter(todoDueToday).length;
+  const nOver=open.filter(isOverdue).length;
+  const nFocus=DB.students.filter(s=>s.specialFocus||s.tags.includes('需要重点关注')).length;
+  const ws=weekStart();
+  const nWeek=DB.growth.filter(r=>r.date>=ws).length+DB.problems.filter(r=>r.date>=ws).length;
+  const nUnf=DB.problems.filter(r=>(!r.followUps||!r.followUps.length)).length;
+  $('stToday').textContent=nToday; $('stOverdue').textContent=nOver; $('stFocus').textContent=nFocus;
+  $('stWeekRec').textContent=nWeek; $('stUnfollow').textContent=nUnf;
+  const b=$('navDashBadge');
+  if(nOver>0){b.style.display='';b.textContent=nOver}else b.style.display='none';
+  // 今日待办列表
+  const list=open.filter(todoDueToday).sort((a,b)=>({高:0,中:1,低:2})[a.priority]-({高:0,中:1,低:2})[b.priority]);
+  $('dashToday').innerHTML=list.length?list.map(t=>`
+    <div class="todo-line"><span class="pri pri-${t.priority}">${t.priority}</span>
+    <span style="flex:1">${esc(t.title)}</span><span style="font-size:11px;color:var(--sub)">${esc(t.type)}</span>
+    <input type="checkbox" style="cursor:pointer" onchange="completeTodo('${t.id}')" title="标记完成"></div>`).join('')
+    :'<div class="empty">今天没有待办事项 🎉<br>去"日常待办提醒"添加每日事务吧</div>';
+  // 需要关注
+  const unf=DB.problems.filter(r=>(!r.followUps||!r.followUps.length)).sort((a,b)=>b.date.localeCompare(a.date)).slice(0,4);
+  const focus=DB.students.filter(s=>s.specialFocus||s.tags.includes('需要重点关注')).slice(0,6);
+  let html='';
+  if(unf.length)html+=`<div style="font-size:12px;color:var(--orange);font-weight:600;margin-bottom:8px">未跟进的问题事件：</div>`+unf.map(r=>{
+    const s=stuById(r.studentId);return `<div class="todo-line" style="cursor:pointer" onclick="openStudentDetail('${r.studentId}')"><span class="type-chip" style="background:var(--orange-l);color:var(--orange)">${esc(r.eventType)}</span><span style="flex:1">${esc(s?s.name:'')}: ${esc(r.process.slice(0,26))}…</span><span style="font-size:11px;color:var(--sub)">${r.date}</span></div>`}).join('');
+  if(focus.length)html+=`<div style="font-size:12px;color:var(--red);font-weight:600;margin:12px 0 8px">${unf.length?'':'重点关注学生：'}</div><div>${focus.map(s=>`<span class="tag" style="background:var(--red-l);color:var(--red);cursor:pointer;padding:5px 10px;font-size:12px" onclick="openStudentDetail('${s.id}')">${esc(s.name)}</span>`).join('')}</div>`;
+  $('dashFocus').innerHTML=html||'<div class="empty">暂无需要特别关注的事项 👍</div>';
+}
+
+/* ================= 学生（档案 + 名单导入） ================= */
+function openImport(){
+  openModal(`<h3>📥 一键导入学生名单</h3>
+  <p style="font-size:12px;color:var(--sub);margin-bottom:12px">每行一个学生。可只填姓名；也可用逗号分隔补充信息：<b>姓名,性别,学号,家长电话</b>（性别填 男/女，缺失项留空即可）</p>
+  <textarea id="impText" rows="10" style="width:100%" placeholder="张小明,男,20260101,13800000001&#10;李小红,女,20260102&#10;王小虎"></textarea>
+  <div class="modal-foot"><button class="btn btn-plain" onclick="closeModal()">取消</button><button class="btn btn-primary" onclick="doImport()">导入并加入备选池</button></div>`);
+}
+function doImport(){
+  const lines=$('impText').value.split('\n').map(l=>l.trim()).filter(Boolean);
+  let n=0;
+  lines.forEach(l=>{
+    const p=l.split(/[,，、\t]/).map(x=>x.trim());
+    if(!p[0])return;
+    DB.students.push({id:uid(),name:p[0],gender:p[1]||'',studentNo:p[2]||'',parentPhone:p[3]||'',emergencyContact:'',familyInfo:'',specialFocus:false,tags:[],created:today()});
+    n++;
+  });
+  save();closeModal();toast(`成功导入 ${n} 名学生，已进入座位备选池`);
+  renderSeats();renderStudents();
+}
+function openStudent(id){
+  const s=id?stuById(id):{id:'',name:'',gender:'',studentNo:'',parentPhone:'',emergencyContact:'',familyInfo:'',specialFocus:false,tags:[],created:today()};
+  openModal(`<h3>${id?'编辑学生档案':'新建学生档案'}</h3>
+  <div class="frm">
+    <label class="f">学生姓名 *<input type="text" id="f_name" value="${esc(s.name)}"></label>
+    <label class="f">性别<select id="f_gender"><option value="">请选择</option><option ${s.gender==='男'?'selected':''}>男</option><option ${s.gender==='女'?'selected':''}>女</option></select></label>
+    <label class="f">学号<input type="text" id="f_no" value="${esc(s.studentNo)}"></label>
+    <label class="f">建档日期<input type="date" id="f_created" value="${s.created||today()}"></label>
+    <label class="f">家长联系电话<input type="tel" id="f_phone" value="${esc(s.parentPhone)}"></label>
+    <label class="f">紧急联系人<input type="text" id="f_emg" value="${esc(s.emergencyContact)}"></label>
+    <label class="f full">家庭简要情况<textarea id="f_family" style="min-height:52px">${esc(s.familyInfo)}</textarea></label>
+    <label class="f full" style="flex-direction:row;align-items:center;gap:8px"><input type="checkbox" id="f_focus" ${s.specialFocus?'checked':''} style="width:16px;height:16px">是否特殊关注学生</label>
+    <div class="full"><div style="font-size:12px;color:var(--sub);margin-bottom:6px">学生标签（座位/筛选用，可多选）</div>
+      <div class="chk-row" id="f_tags">${TAGS.map(t=>`<span class="chk ${s.tags.includes(t)?'on':''}" data-t="${t}" onclick="this.classList.toggle('on')">${t}</span>`).join('')}</div>
+    </div>
+  </div>
+  <div class="modal-foot">${id?`<button class="btn btn-red" onclick="delStudent('${id}')">删除档案</button>`:''}<button class="btn btn-plain" onclick="closeModal()">取消</button><button class="btn btn-primary" onclick="saveStudent('${id||''}')">保存</button></div>`);
+}
+function saveStudent(id){
+  const name=$('f_name').value.trim();
+  if(!name){alert('请填写学生姓名');return}
+  const tags=[...document.querySelectorAll('#f_tags .chk.on')].map(el=>el.dataset.t);
+  if(id){const s=stuById(id);Object.assign(s,{name,gender:$('f_gender').value,studentNo:$('f_no').value.trim(),parentPhone:$('f_phone').value.trim(),emergencyContact:$('f_emg').value.trim(),familyInfo:$('f_family').value.trim(),specialFocus:$('f_focus').checked,tags,created:$('f_created').value})}
+  else DB.students.push({id:uid(),name,gender:$('f_gender').value,studentNo:$('f_no').value.trim(),parentPhone:$('f_phone').value.trim(),emergencyContact:$('f_emg').value.trim(),familyInfo:$('f_family').value.trim(),specialFocus:$('f_focus').checked,tags,created:$('f_created').value||today()});
+  save();closeModal();renderStudents();renderSeats();toast('学生档案已保存');
+}
+function delStudent(id){
+  const s=stuById(id);if(!s)return;
+  if(!confirm(`确定删除学生「${s.name}」的档案吗？\n其座位将释放回备选池（表现/问题记录保留但显示为已删档案）。`))return;
+  for(const k in DB.seats)if(DB.seats[k]===id)delete DB.seats[k];
+  DB.students=DB.students.filter(x=>x.id!==id);
+  save();closeModal();renderStudents();renderSeats();renderDash();
+}
+function renderStudents(){
+  const kw=($('stuSearch').value||'').trim();
+  const onlyFocus=$('stuFocusOnly').checked;
+  let list=DB.students.filter(s=>(!kw||s.name.includes(kw)||s.studentNo.includes(kw))&&(!onlyFocus||s.specialFocus));
+  const sort=$('stuSort').value;
+  list.sort((a,b)=>sort==='name'?a.name.localeCompare(b.name,'zh'):sort==='date'?(b.created||'').localeCompare(a.created||''):(a.studentNo||'').localeCompare(b.studentNo||''));
+  $('stuGrid').innerHTML=list.length?list.map(s=>{
+    const seat=Object.entries(DB.seats).find(([k,v])=>v===s.id);
+    return `<div class="card stu-card" onclick="openStudentDetail('${s.id}')">
+      ${s.specialFocus||s.tags.includes('需要重点关注')?'<span class="focus-flag">重点关注</span>':''}
+      <div class="avatar">${esc(s.name.slice(-2))}</div>
+      <div class="nm">${esc(s.name)} <span style="font-size:12px;color:var(--sub);font-weight:400">${s.gender||''}</span></div>
+      <div class="meta">${s.studentNo?'学号 '+esc(s.studentNo)+' · ':''}建档 ${s.created||''}<br>${seat?'座位 '+seatName(seat[0]):'未安排座位'}</div>
+      <div style="margin-top:6px">${s.tags.map(t=>`<span class="tag" style="background:var(--orange-l);color:var(--orange)">${esc(t)}</span>`).join('')}${s.specialFocus?'<span class="tag" style="background:var(--red-l);color:var(--red)">特殊关注</span>':''}</div>
+    </div>`}).join(''):'<div class="card empty" style="grid-column:1/-1">还没有学生档案<br>点击右上角「一键导入学生名单」批量建档，或逐个「新建学生档案」</div>';
+}
+/* 学生详情：档案 + 全部历史记录 */
+function openStudentDetail(id){
+  const s=stuById(id);if(!s)return;
+  const seat=Object.entries(DB.seats).find(([k,v])=>v===s.id);
+  const gr=DB.growth.filter(r=>r.studentId===id).sort((a,b)=>b.date.localeCompare(a.date));
+  const pr=DB.problems.filter(r=>r.studentId===id).sort((a,b)=>b.date.localeCompare(a.date));
+  openModal(`<h3>👶 ${esc(s.name)} 的档案详情</h3>
+  <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
+    <button class="btn btn-plain btn-sm" onclick="openStudent('${id}')">✏️ 编辑档案</button>
+    <button class="btn btn-green btn-sm" onclick="openGrowth(null,'${id}')">＋ 表现记录</button>
+    <button class="btn btn-primary btn-sm" onclick="openProblem(null,'${id}')">＋ 问题留痕</button>
+  </div>
+  <div class="detail-kv">
+    <div><div class="k">性别</div><div class="v">${esc(s.gender)||'—'}</div></div>
+    <div><div class="k">学号</div><div class="v">${esc(s.studentNo)||'—'}</div></div>
+    <div><div class="k">家长联系电话</div><div class="v">${esc(s.parentPhone)||'—'}</div></div>
+    <div><div class="k">紧急联系人</div><div class="v">${esc(s.emergencyContact)||'—'}</div></div>
+    <div><div class="k">座位</div><div class="v">${seat?seatName(seat[0]):'未安排'}</div></div>
+    <div><div class="k">建档日期</div><div class="v">${esc(s.created)}</div></div>
+    <div style="grid-column:1/-1"><div class="k">家庭简要情况</div><div class="v">${esc(s.familyInfo)||'—'}</div></div>
+    <div style="grid-column:1/-1"><div class="k">标签</div><div class="v">${s.tags.map(t=>`<span class="tag" style="background:var(--orange-l);color:var(--orange)">${esc(t)}</span>`).join('')||'—'} ${s.specialFocus?'<span class="tag" style="background:var(--red-l);color:var(--red)">特殊关注</span>':''}</div></div>
+  </div>
+  <div style="border-top:1px solid var(--border);padding-top:12px">
+    <div style="font-size:13px;font-weight:600;margin-bottom:8px">📜 全部历史记录（${gr.length}条表扬 · ${pr.length}条问题）</div>
+    ${[...gr.map(r=>({...r,_k:'g'})),...pr.map(r=>({...r,_k:'p'}))].sort((a,b)=>b.date.localeCompare(a.date)).map(r=>r._k==='g'?`
+      <div style="padding:8px 10px;background:var(--green-l);border-radius:8px;margin-bottom:8px;font-size:13px">
+        <b style="color:var(--green)">🌱 表现 · ${esc(r.type)}</b> <span style="font-size:11px;color:var(--sub)">${r.date}</span>
+        <div style="margin-top:3px;line-height:1.6">${esc(r.content)}</div>
+        ${r.comment?`<div style="font-size:12px;color:var(--sub);margin-top:2px">评语：${esc(r.comment)}</div>`:''}
+        <div style="font-size:11px;color:var(--sub);margin-top:2px">${r.notifiedParent?'已告知家长（'+esc(r.notifyWay||'')+'）':'未告知家长'} · <span style="color:var(--blue);cursor:pointer" onclick="openGrowth('${r.id}')">编辑</span></div>
+      </div>`:`
+      <div style="padding:8px 10px;background:var(--orange-l);border-radius:8px;margin-bottom:8px;font-size:13px">
+        <b style="color:var(--orange)">⚠️ 问题 · ${esc(r.eventType)}</b> <span style="font-size:11px;color:var(--sub)">${r.date} ${esc(r.period||'')}</span>
+        <div style="margin-top:3px;line-height:1.6">${esc(r.process)}</div>
+        <div style="font-size:11px;color:var(--sub);margin-top:2px">家长沟通：${esc(r.parentComm||'未沟通')}${(r.followUps&&r.followUps.length)?' · 跟进'+r.followUps.length+'次':' · 未跟进'} · <span style="color:var(--blue);cursor:pointer" onclick="openProblem('${r.id}')">查看/补充跟进</span></div>
+      </div>`).join('')||'<div class="empty">暂无表现 / 问题记录</div>'}
+  </div>
+  <div class="modal-foot"><button class="btn btn-primary" onclick="closeModal()">关闭</button></div>`);
+}
+
+/* ================= 座位管理 ================= */
+function poolStudents(){
+  const seated=new Set(Object.values(DB.seats));
+  return DB.students.filter(s=>!seated.has(s.id));
+}
+function seatMatchesFilter(seatId,sid){
+  const fg=$('filterGroup').value, ft=$('filterTag').value, kw=($('filterName').value||'').trim();
+  const s=stuById(sid);if(!s)return false;
+  if(kw&&!s.name.includes(kw))return false;
+  if(ft&&!s.tags.includes(ft)&&!(ft==='特殊关注'&&s.specialFocus))return false;
+  if(fg&&fg==='single'&&seatGroup(seatId)!=='single')return false;
+  if(fg&&fg!=='single'&&fg!=='pool'&&seatGroup(seatId)!==fg)return false;
+  return true;
+}
+function renderSeats(){
+  $('logCount').textContent=DB.seatLogs.length;
+  // 标签筛选下拉
+  const ft=$('filterTag');const cur=ft.value;
+  ft.innerHTML='<option value="">全部标签</option>'+[...TAGS,'特殊关注'].map(t=>`<option ${cur===t?'selected':''}>${t}</option>`).join('');
+  // 平面图
+  const fg=$('filterGroup').value;
+  let html='';
+  for(let g=GROUPS;g>=1;g--){
+    if(fg&&fg!=='single'&&fg!=='pool'&&fg!==String(g))continue;
+    html+=`<div class="group"><div class="group-title">第 ${g} 组</div>`;
+    for(let r=1;r<=ROWS;r++){
+      html+=`<div class="row-label">第${r}排</div><div class="rowpair">`;
+      for(const c of COLS){
+        const id=`g${g}-${c}-${r}`;const sid=DB.seats[id];const s=sid?stuById(sid):null;
+        html+=seatCell(id,s,false,fg,ft.value);
+      }
+      html+='</div>';
+    }
+    html+='</div>';
+  }
+  $('seatGroups').innerHTML=html||'<div class="empty" style="grid-column:1/-1">当前筛选条件下没有显示的组别</div>';
+  if(fg===''||fg==='single'){
+    ['s1','s2'].forEach(id=>{
+      const el=document.querySelector(`[data-seat="${id}"]`);if(!el)return;
+      const sid=DB.seats[id];const s=sid?stuById(sid):null;
+      const show=(!fg||fg==='single')&&(!ft.value||(s&&seatMatchesFilter(id,sid)))&&seatMatchesFilter(id,sid);
+      el.innerHTML=`<span class="corner">单人桌${id==='s1'?'1':'2'}</span>`+(s?`<div class="sname">${esc(s.name)}</div><div class="stags">${s.tags.join('·')||'&nbsp;'}</div>`:(show?'<span style="font-size:11px;color:var(--sub)">空</span>':''));
+      el.classList.toggle('filled',!!s&&(!fg||fg==='single'));
+      el.style.opacity=(s&&(!fg||fg==='single')&&seatMatchesFilter(id,sid))?'1':'0.25';
+    });
+  }
+  // 拖拽绑定
+  bindSeatDnD();
+  // 备选池
+  const pool=poolStudents().filter(s=>{
+    if(fg==='pool'||!fg){}else return false;
+    const kw=($('filterName').value||'').trim();if(kw&&!s.name.includes(kw))return false;
+    if(ft.value&&!s.tags.includes(ft.value)&&!(ft.value==='特殊关注'&&s.specialFocus))return false;
+    return true;
+  });
+  $('poolCount').textContent=poolStudents().length+'人待安排';
+  $('poolBox').innerHTML=pool.length?pool.map(s=>`<div class="pool-item" draggable="true" data-sid="${s.id}"><span><b>${esc(s.name)}</b>${s.tags.length?`<span class="pt"> ${s.tags.join('·')}</span>`:''}</span><span style="font-size:11px;color:var(--sub)">拖到座位→</span></div>`).join('')
+    :(DB.students.length?`<div class="empty" style="padding:16px">${fg&&fg!=='pool'&&fg!==''?'当前按组别筛选，不显示备选池':'全部学生已安排座位'}</div>`:'<div class="empty">还没有学生<br>先点右上角「导入学生名单」</div>');
+  // 表格视图
+  if(seatViewTable)renderSeatTable();
+}
+function seatCell(id,s,dim,fg,ftag){
+  let show=true;
+  const s2=s;
+  if(ftag&&!s2)return false;
+  if(s2){
+    show=seatMatchesFilter(id,s2.id);
+    if(fg&&fg==='single')show=false;
+    if(fg&&fg!=='single'&&fg!=='pool'&&seatGroup(id)!==fg)show=false;
+  }
+  return `<div class="seat ${s?'filled':''}" data-seat="${id}" style="${s&&!show?'opacity:.25':''}">
+    ${s?`<div class="sname">${esc(s.name)}</div><div class="stags">${s.tags.join('·')||'&nbsp;'}</div>`:`<span style="font-size:10px;color:#c3cad6">空</span>`}</div>`;
+}
+function bindSeatDnD(){
+  let dragSid=null,dragFrom=null;
+  document.querySelectorAll('[data-sid]').forEach(el=>{
+    el.addEventListener('dragstart',e=>{dragSid=el.dataset.sid;dragFrom=null;e.dataTransfer.setData('text/plain',dragSid)});
+  });
+  document.querySelectorAll('#poolBox .pool-item').forEach(el=>{
+    el.addEventListener('dragstart',e=>{dragSid=el.dataset.sid;dragFrom='pool'});
+  });
+  document.querySelectorAll('.seat').forEach(el=>{
+    el.addEventListener('dragover',e=>{e.preventDefault();el.classList.add('drag-over')});
+    el.addEventListener('dragleave',()=>el.classList.remove('drag-over'));
+    el.addEventListener('drop',e=>{
+      e.preventDefault();el.classList.remove('drag-over');
+      const sid=e.dataTransfer.getData('text/plain');if(!sid)return;
+      const to=el.dataset.seat;
+      moveStudent(sid,to,dragFrom==='pool'?'pool':(Object.keys(DB.seats).find(k=>DB.seats[k]===sid)||null));
+      dragSid=null;dragFrom=null;
+    });
+  });
+}
+function moveStudent(sid,toSeat,fromSeat){
+  const s=stuById(sid);if(!s)return;
+  const occupant=Object.keys(DB.seats).find(k=>DB.seats[k]===sid);
+  if(occupant===toSeat)return;
+  // 交换对象
+  const swappedSid=DB.seats[toSeat]||null;
+  if(occupant)delete DB.seats[occupant];
+  DB.seats[toSeat]=sid;
+  if(swappedSid&&swappedSid!==sid){
+    if(occupant)DB.seats[occupant]=swappedSid; // 交换到原位置
+  }
+  save();
+  askSeatLog(s,fromSeat==='pool'?'备选池':(fromSeat?seatName(fromSeat):seatName(occupant)),seatName(toSeat),swappedSid&&occupant?stuById(swappedSid)?.name:null);
+}
+function askSeatLog(s,from,to,swapped){
+  openModal(`<h3>🪑 调座确认 · ${esc(s.name)}</h3>
+  <p style="font-size:13px;margin-bottom:12px">座位变动：<b>${esc(from)}</b> → <b>${esc(to)}</b>${swapped?`<br>（与「${esc(swapped)}」互换座位）`:''}</p>
+  <div class="frm" style="grid-template-columns:1fr">
+    <label class="f">调整原因<select id="log_reason"><option>定期轮换</option><option>视力保护</option><option>课堂纪律</option><option>同桌矛盾</option><option>身高调整</option><option>特殊照顾</option><option>学生/家长申请</option><option>其他</option></select></label>
+    <label class="f">班主任备注（选填）<input type="text" id="log_note" placeholder="如：家长反映看不清黑板"></label>
+  </div>
+  <div class="modal-foot"><button class="btn btn-plain" onclick="closeModal()">完成</button><button class="btn btn-primary" onclick="saveSeatLog('${s.id}','${esc(from)}','${esc(to)}')">保存调座日志</button></div>`);
+  // 直接关闭也保留座位变动，只是不写日志
+}
+function saveSeatLog(sid,from,to){
+  DB.seatLogs.unshift({id:uid(),date:today(),student:stuById(sid)?.name||'',reason:$('log_reason').value,from,to,note:$('log_note').value.trim()});
+  save();closeModal();toast('调座完成，日志已记录');
+}
+function openSeatLog(){
+  const list=DB.seatLogs;
+  openModal(`<h3>📜 座位变动日志（${list.length}条）</h3>
+  <div style="max-height:420px;overflow:auto">
+  ${list.length?`<table class="tbl"><tr><th>调整日期</th><th>学生</th><th>原座位</th><th>新座位</th><th>调整原因</th><th>备注</th></tr>
+  ${list.map(l=>`<tr><td>${l.date}</td><td><b>${esc(l.student)}</b></td><td>${esc(l.from)}</td><td>${esc(l.to)}</td><td>${esc(l.reason)}</td><td>${esc(l.note||'—')}</td></tr>`).join('')}</table>`:'<div class="empty">还没有调座记录<br>在座位图上拖拽学生即可自动生成日志</div>'}
+  </div><div class="modal-foot"><button class="btn btn-primary" onclick="closeModal()">关闭</button></div>`);
+}
+function renderSeatTable(){
+  const rows=allSeatIds().map(id=>{
+    const sid=DB.seats[id];const s=sid?stuById(sid):null;
+    return {id,name:s?s.name:'—',tags:s?s.tags.join('、'):'',focus:s&&s.specialFocus?'是':'否',group:seatGroup(id)==='single'?'单人桌':seatGroup(id)+'组',seat:seatName(id)};
+  }).filter(r=>r.name!=='—');
+  $('seatTableView').innerHTML=`<table class="tbl"><tr><th>组别</th><th>座位</th><th>学生姓名</th><th>标签</th><th>特殊关注</th></tr>
+  ${rows.length?rows.map(r=>`<tr><td>${r.group}</td><td>${r.seat}</td><td><b>${esc(r.name)}</b></td><td>${esc(r.tags)||'—'}</td><td>${r.focus}</td></tr>`).join(''):'<tr><td colspan="5" style="text-align:center;color:var(--sub);padding:20px">暂无已安排座位的学生</td></tr>'}</table>`;
+}
+function toggleSeatView(){
+  seatViewTable=!seatViewTable;
+  $('seatMapWrap').style.display=seatViewTable?'none':'';
+  document.querySelector('.pool').style.display=seatViewTable?'none':'';
+  $('seatTableView').style.display=seatViewTable?'':'none';
+  $('seatViewToggle').textContent=seatViewTable?'切换平面图视图':'切换表格视图';
+  if(seatViewTable)renderSeatTable();
+}
+
+/* ================= 日常待办 ================= */
+const TODO_TYPES=['家校沟通','资料上交','班会准备','安全排查','教研任务','学生谈话','其他'];
+function initTodoFilters(){
+  const sel=$('todoFilterType');const cur=sel.value;
+  sel.innerHTML='<option value="">全部类型</option>'+TODO_TYPES.map(t=>`<option ${cur===t?'selected':''}>${t}</option>`).join('');
+}
+function openTodo(id){
+  const t=id?DB.todos.find(x=>x.id===id):{title:'',due:today(),priority:'中',type:'其他',detail:'',status:'未开始',repeat:'none',repeatWeek:1,repeatDay:1};
+  openModal(`<h3>${id?'编辑待办':'新增待办'}</h3>
+  <div class="frm">
+    <label class="f full">待办标题 *<input type="text" id="t_title" value="${esc(t.title)}" placeholder="如：收齐春游回执单"></label>
+    <label class="f">截止时间<input type="date" id="t_due" value="${t.due||today()}"></label>
+    <label class="f">优先级<select id="t_pri">${['高','中','低'].map(p=>`<option ${t.priority===p?'selected':''}>${p}</option>`).join('')}</select></label>
+    <label class="f">类型<select id="t_type">${TODO_TYPES.map(x=>`<option ${t.type===x?'selected':''}>${x}</option>`).join('')}</select></label>
+    <label class="f">完成状态<select id="t_status">${['未开始','进行中','已完成'].map(x=>`<option ${t.status===x?'selected':''}>${x}</option>`).join('')}</select></label>
+    <label class="f">重复设置<select id="t_repeat" onchange="document.getElementById('rw').style.display=this.value==='weekly'?'':'none';document.getElementById('rm').style.display=this.value==='monthly'?'':'none'">
+      <option value="none" ${t.repeat==='none'?'selected':''}>不重复</option>
+      <option value="weekly" ${t.repeat==='weekly'?'selected':''}>每周重复</option>
+      <option value="monthly" ${t.repeat==='monthly'?'selected':''}>每月重复</option></select></label>
+    <div id="rw" style="display:${t.repeat==='weekly'?'':'none'}"><label class="f">每周几（周一为一周开始）<select id="t_rweek">${['周一','周二','周三','周四','周五','周六','周日'].map((d,i)=>`<option value="${i+1}" ${(t.repeatWeek||1)===i+1?'selected':''}>${d}</option>`).join('')}</select></label></div>
+    <div id="rm" style="display:${t.repeat==='monthly'?'':'none'}"><label class="f">每月几号<select id="t_rday">${Array.from({length:31},(_,i)=>i+1).map(d=>`<option value="${d}" ${t.repeatDay===d?'selected':''}>${d}号</option>`).join('')}</select></label></div>
+    <label class="f full">详情备注<textarea id="t_detail">${esc(t.detail)}</textarea></label>
+  </div>
+  <div class="modal-foot">${id?`<button class="btn btn-red" onclick="delTodo('${id}')">删除</button>`:''}<button class="btn btn-plain" onclick="closeModal()">取消</button><button class="btn btn-primary" onclick="saveTodo('${id||''}')">保存</button></div>`);
+}
+function saveTodo(id){
+  const title=$('t_title').value.trim();
+  if(!title){alert('请填写待办标题');return}
+  const repeat=$('t_repeat').value;
+  const data={title,due:$('t_due').value,priority:$('t_pri').value,type:$('t_type').value,status:$('t_status').value,detail:$('t_detail').value.trim(),repeat,
+    repeatWeek:repeat==='weekly'?+$('t_rweek').value:null,repeatDay:repeat==='monthly'?+$('t_rday').value:null};
+  if(id){const t=DB.todos.find(x=>x.id===id);Object.assign(t,data);if(t.status==='已完成'&&!t.completedAt)t.completedAt=new Date().toISOString();if(t.status!=='已完成')t.completedAt=null}
+  else DB.todos.push({id:uid(),completedAt:data.status==='已完成'?new Date().toISOString():null,...data});
+  save();closeModal();renderTodos();renderDash();
+}
+function delTodo(id){if(!confirm('确定删除这条待办吗？（已归档的历史完成记录不受影响）'))return;DB.todos=DB.todos.filter(x=>x.id!==id);save();closeModal();renderTodos();renderDash()}
+function completeTodo(id){
+  const t=DB.todos.find(x=>x.id===id);if(!t)return;
+  t.status='已完成';t.completedAt=new Date().toISOString();
+  // 重复待办：完成后自动生成下一期
+  if(t.repeat==='weekly'){
+    const d=new Date(t.due||today());d.setDate(d.getDate()+7);
+    DB.todos.push({...t,id:uid(),status:'未开始',due:d.toISOString().slice(0,10),completedAt:null,detail:t.detail});
+    toast('已完成！已自动生成下一期（每周重复）');
+  }else if(t.repeat==='monthly'){
+    const d=new Date(t.due||today());d.setMonth(d.getMonth()+1);
+    DB.todos.push({...t,id:uid(),status:'未开始',due:d.toISOString().slice(0,10),completedAt:null,detail:t.detail});
+    toast('已完成！已自动生成下一期（每月重复）');
+  }else toast('待办已完成，已归档');
+  save();renderTodos();renderDash();
+}
+function reopenTodo(id){const t=DB.todos.find(x=>x.id===id);t.status='未开始';t.completedAt=null;save();renderTodos();renderDash()}
+function renderTodos(){
+  initTodoFilters();
+  const ft=$('todoFilterType').value,fp=$('todoFilterPri').value,fs=$('todoFilterStatus').value,tm=$('todoFilterTime').value,kw=($('todoSearch').value||'').trim();
+  const td=today(),ws=weekStart();
+  let list=DB.todos.filter(t=>{
+    if(ft&&t.type!==ft)return false;
+    if(fp&&t.priority!==fp)return false;
+    if(fs&&t.status!==fs)return false;
+    if(tm==='today'&&!(t.due===td&&t.status!=='已完成'))return false;
+    if(tm==='week'&&!(t.due>=ws&&t.due<=td&&t.status!=='已完成'))return false;
+    if(tm==='overdue'&&!(t.due<td&&t.status!=='已完成'&&t.repeat==='none'))return false;
+    if(kw&&!t.title.includes(kw))return false;
+    return true;
+  });
+  list.sort((a,b)=>{
+    if((a.status==='已完成')!==(b.status==='已完成'))return a.status==='已完成'?1:-1;
+    const pri={'高':0,'中':1,'低':2};
+    if(pri[a.priority]!==pri[b.priority])return pri[a.priority]-pri[b.priority];
+    return (a.due||'').localeCompare(b.due||'');
+  });
+  $('todoList').innerHTML=list.length?list.map(t=>{
+    const od=isOverdue(t);
+    const repeatTxt=t.repeat==='weekly'?'每周'+['周日','周一','周二','周三','周四','周五','周六'][(t.repeatWeek||1)%7]:t.repeat==='monthly'?'每月'+t.repeatDay+'号':'';
+    return `<div class="todo-item st-${t.status} ${od?'overdue':''}">
+      <div class="todo-check" onclick="${t.status==='已完成'?`reopenTodo('${t.id}')`:`completeTodo('${t.id}')`}">${t.status==='已完成'?'✓':''}</div>
+      <div style="flex:1">
+        <div class="todo-title">${esc(t.title)} ${od?'<span class="pri pri-高">已过期</span>':''}</div>
+        <div class="todo-meta">
+          <span class="pri pri-${t.priority}">${t.priority}</span><span>${esc(t.type)}</span>
+          <span>截止：${t.due||'—'}</span>${repeatTxt?`<span class="todo-repeat">🔁 ${repeatTxt}</span>`:''}
+          ${t.status==='已完成'?`<span style="color:var(--green)">完成于 ${fmtDate((t.completedAt||'').slice(0,16))}</span>`:`<span>${t.status}</span>`}
+        </div>
+        ${t.detail?`<div style="font-size:12px;color:var(--sub);margin-top:4px;line-height:1.6">${esc(t.detail)}</div>`:''}
+      </div>
+      <div class="todo-act">
+        <select class="btn btn-plain btn-sm" style="padding:4px 8px" onchange="quickStatus('${t.id}',this.value)">
+          ${['未开始','进行中','已完成'].map(s=>`<option ${t.status===s?'selected':''}>${s}</option>`).join('')}
+        </select>
+        <button class="btn btn-plain btn-sm" onclick="openTodo('${t.id}')">编辑</button>
+      </div>
+    </div>`}).join(''):'<div class="empty">没有符合条件的待办<br>点击右上角「新增待办」添加班级事务</div>';
+}
+function quickStatus(id,v){
+  const t=DB.todos.find(x=>x.id===id);
+  if(v==='已完成'){completeTodo(id);return}
+  t.status=v;save();renderTodos();renderDash();
+}
+
+/* ================= AI 快速创建待办 ================= */
+let aiTasks=null;
+function openAiTodo(){
+  aiTasks=null;
+  openModal(`<h3>🤖 AI 快速创建待办</h3>
+  <p style="font-size:12px;color:var(--sub);margin-bottom:10px;line-height:1.7">用一段自然语言描述事项，AI 会拆解为任务卡片。<b>日期或内容不明确时 AI 会标记"待确认"，不会自行编造</b>；卡片可编辑，确认后才写入待办列表。示例：「明天下午准备家长会材料，周五前完成教室布置」</p>
+  <textarea id="ai_text" rows="4" style="width:100%" placeholder="输入待办描述，可一次描述多件事…"></textarea>
+  <div id="ai_state"></div>
+  <div id="ai_cards"></div>
+  <div class="modal-foot">
+    <button class="btn btn-plain" onclick="closeModal()">取消</button>
+    <button class="btn btn-primary" id="ai_btn" onclick="aiParse()">开始解析</button>
+  </div>`);
+  $('ai_text').focus();
+}
+function aiSetState(type,msg){
+  $('ai_state').innerHTML=msg?`<div class="ai-state ${type}">${type==='loading'?'⏳ ':type==='error'?'⚠️ ':'✅ '}${esc(msg)}</div>`:'';
+  const btn=$('ai_btn');
+  if(btn){btn.disabled=(type==='loading');btn.textContent=type==='loading'?'解析中…':'开始解析'}
+}
+async function aiParse(){
+  const text=$('ai_text').value.trim();
+  if(!text){alert('请输入待办描述');return}
+  $('ai_cards').innerHTML='';aiTasks=null;
+  aiSetState('loading','AI 正在解析任务，请稍候…');
+  const ctrl=new AbortController();const timer=setTimeout(()=>ctrl.abort(),30000);
+  try{
+    const res=await fetch('/api/ai-todo',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text}),signal:ctrl.signal});
+    const j=await res.json().catch(()=>null);
+    if(!j)throw new Error('服务返回格式异常，无法解析');
+    if(!j.ok){aiSetState('error',j.error||(`API 调用失败（HTTP ${res.status}）`));return}
+    if(!Array.isArray(j.tasks)||!j.tasks.length){aiSetState('error','解析失败：AI 未能识别出任何任务，请换一种描述方式重试');return}
+    aiTasks=j.tasks.map(t=>({include:true,...t}));
+    aiSetState('ok',`解析成功，共 ${aiTasks.length} 个任务${j.mock?'（当前为 MOCK 演示数据）':''}。请检查卡片内容并确认写入。`);
+    renderAiCards();
+  }catch(e){
+    if(e.name==='AbortError')aiSetState('error','请求超时（30 秒）。请检查后端服务是否运行、网络是否可用后重试');
+    else if(location.protocol==='file:')aiSetState('error','未检测到后端服务：AI 功能需要运行 node server.js 后，通过 http://localhost:3000 访问');
+    else aiSetState('error','API 调用失败：'+e.message);
+  }finally{clearTimeout(timer)}
+}
+function renderAiCards(){
+  const foot=document.querySelector('#ai_foot')||$('modal').querySelector('.modal-foot');
+  if(foot)foot.innerHTML=`<button class="btn btn-plain" onclick="closeModal()">取消</button>
+    <button class="btn btn-plain" onclick="aiParse()">重新解析</button>
+    <button class="btn btn-green" onclick="confirmAiTodos()">✔ 确认写入所选任务</button>`;
+  $('ai_cards').innerHTML=aiTasks.map((t,i)=>`
+    <div class="ai-card ${t.needsConfirm?'confirm-flag':''}">
+      <div class="ac-head">
+        <input type="checkbox" ${t.include?'checked':''} onchange="aiField(${i},'include',this.checked)" style="width:16px;height:16px;cursor:pointer">
+        <span class="no">任务 ${i+1}</span>
+        ${t.needsConfirm?'<span class="confirm-chip">⚠️ 待确认</span>':'<span class="type-chip" style="background:var(--green-l);color:var(--green)">信息完整</span>'}
+        <span style="font-size:11px;color:var(--sub);margin-left:auto">可直接修改下方内容</span>
+      </div>
+      <div class="frm">
+        <label class="f">任务标题<input type="text" value="${esc(t.title)}" oninput="aiField(${i},'title',this.value)"></label>
+        <label class="f">截止日期<input type="date" value="${t.due||''}" onchange="aiField(${i},'due',this.value)"></label>
+        <label class="f">优先级<select onchange="aiField(${i},'priority',this.value)">${['高','中','低'].map(p=>`<option ${t.priority===p?'selected':''}>${p}</option>`).join('')}</select></label>
+        <label class="f full">类型<select onchange="aiField(${i},'type',this.value)">${TODO_TYPES.map(x=>`<option ${t.type===x?'selected':''}>${x}</option>`).join('')}</select></label>
+        ${t.needsConfirm?`<div class="full" style="font-size:12px;color:var(--orange)">待确认原因：${esc(t.confirmReason||'日期或内容不明确，请在写入前补充')}${t.confirmReason?`<input type="text" placeholder="补充说明（可选，将写入备注）" style="width:100%;margin-top:6px" oninput="aiField(${i},'extraNote',this.value)">`:''}</div>`:''}
+      </div>
+    </div>`).join('');
+}
+function aiField(i,k,v){if(aiTasks&&aiTasks[i])aiTasks[i][k]=v}
+function confirmAiTodos(){
+  if(!aiTasks)return;
+  const picked=aiTasks.filter(t=>t.include&&t.title&&t.title.trim());
+  if(!picked.length){alert('请至少勾选并填写一个任务');return}
+  const unconfirmed=picked.filter(t=>t.needsConfirm&&!t.due).length;
+  if(unconfirmed&&!confirm(`有 ${unconfirmed} 个任务截止日期仍为空（待确认），确定也要写入吗？\n写入后可在待办列表中补充截止日期。`))return;
+  picked.forEach(t=>{
+    DB.todos.push({id:uid(),title:t.title.trim(),due:t.due||null,priority:t.priority,type:t.type,
+      detail:[t.needsConfirm?'⚠️AI标记待确认：'+(t.confirmReason||'日期或内容不明确'):'',t.extraNote?'补充说明：'+t.extraNote:''].filter(Boolean).join('；'),
+      status:'未开始',repeat:'none',completedAt:null});
+  });
+  save();closeModal();
+  $('todoFilterStatus').value='';$('todoFilterTime').value='';
+  renderTodos();renderDash();
+  toast(`已写入 ${picked.length} 条待办${picked.some(t=>t.needsConfirm)?'，其中含待确认任务，请注意补充':''}`);
+}
+
+
+/* ================= 记录（表现 + 问题） ================= */
+function initRecFilters(){
+  const s1=$('recFilterStu'),s2=$('recFilterType');const c1=s1.value,c2=s2.value;
+  s1.innerHTML='<option value="">全部学生</option>'+DB.students.map(s=>`<option value="${s.id}" ${c1===s.id?'selected':''}>${esc(s.name)}</option>`).join('');
+  const types=recTab==='g'?['课堂表现','劳动表现','同伴交往','进步表扬','活动获奖','其他']:['课堂纪律','同伴矛盾','安全磕碰','情绪问题','作业问题','行为习惯','其他'];
+  s2.innerHTML='<option value="">全部类型</option>'+types.map(t=>`<option ${c2===t?'selected':''}>${t}</option>`).join('');
+}
+function switchRecTab(k){recTab=k;$('segG').classList.toggle('active',k==='g');$('segP').classList.toggle('active',k==='p');$('recFilterType').value='';renderRecords()}
+function stuOptions(sel){return DB.students.map(s=>`<option value="${s.id}" ${sel===s.id?'selected':''}>${esc(s.name)}</option>`).join('')}
+/* --- 表现记录 --- */
+function openGrowth(id,preStu){
+  const r=id?DB.growth.find(x=>x.id===id):{studentId:preStu||'',date:today(),type:'课堂表现',content:'',comment:'',notifiedParent:false,notifyWay:''};
+  openModal(`<h3>🌱 ${id?'编辑表现记录':'新增表现记录'}（正向记录为主）</h3>
+  <div class="frm">
+    <label class="f">关联学生 *<select id="g_stu"><option value="">请选择学生</option>${stuOptions(r.studentId)}</select></label>
+    <label class="f">记录日期<input type="date" id="g_date" value="${r.date}"></label>
+    <label class="f">记录类型<select id="g_type">${['课堂表现','劳动表现','同伴交往','进步表扬','活动获奖','其他'].map(t=>`<option ${r.type===t?'selected':''}>${t}</option>`).join('')}</select></label>
+    <label class="f">是否同步告知家长<select id="g_notified"><option value="no" ${!r.notifiedParent?'selected':''}>否</option><option value="yes" ${r.notifiedParent?'selected':''}>是</option></select></label>
+    <label class="f">告知方式（选填）<select id="g_way">${['','微信','电话','面谈','家访'].map(w=>`<option ${r.notifyWay===w?'selected':''}>${w||'请选择'}</option>`).join('')}</select></label>
+    <label class="f full">具体内容描述 *<textarea id="g_content" placeholder="客观描述学生的具体表现，如：今天数学课上主动举手回答了3次问题，声音响亮">${esc(r.content)}</textarea></label>
+    <label class="f full">班主任评语（选填）<textarea id="g_comment" style="min-height:48px" placeholder="一句鼓励的话，如：继续保持，你是同学们的好榜样！">${esc(r.comment)}</textarea></label>
+  </div>
+  <div class="modal-foot"><button class="btn btn-plain" onclick="closeModal()">取消</button><button class="btn btn-primary" onclick="saveGrowth('${id||''}')">保存</button></div>`);
+}
+function saveGrowth(id){
+  const studentId=$('g_stu').value,content=$('g_content').value.trim();
+  if(!studentId){alert('请选择关联学生');return}
+  if(!content){alert('请填写具体内容描述');return}
+  const data={studentId,date:$('g_date').value,type:$('g_type').value,content,comment:$('g_comment').value.trim(),
+    notifiedParent:$('g_notified').value==='yes',notifyWay:$('g_way').value==='请选择'?'':$('g_way').value};
+  if(id)Object.assign(DB.growth.find(x=>x.id===id),data);
+  else DB.growth.push({id:uid(),...data});
+  save();closeModal();renderRecords();renderDash();toast('表现记录已保存');
+}
+/* --- 问题留痕 --- */
+function openProblem(id,preStu){
+  const r=id?DB.problems.find(x=>x.id===id):{studentId:preStu||'',date:today(),period:'上午',eventType:'课堂纪律',process:'',handling:'',parentComm:'未沟通',parentFeedback:'',followPlan:'',followUps:[],recorder:'班主任'};
+  openModal(`<h3>⚠️ ${id?'查看 / 补充问题留痕':'新增问题留痕'}</h3>
+  <p style="font-size:12px;color:var(--sub);margin-bottom:12px">事件经过请<b>客观写实记录</b>，不带主观情绪化评价。问题记录禁止删除，只能编辑补充，形成完整事件时间线。</p>
+  <div class="frm">
+    <label class="f">关联学生 *<select id="p_stu"><option value="">请选择学生</option>${stuOptions(r.studentId)}</select></label>
+    <label class="f">发生日期<input type="date" id="p_date" value="${r.date}"></label>
+    <label class="f">发生时段<select id="p_period">${['早读','上午','午间','下午','课后托管','其他'].map(t=>`<option ${r.period===t?'selected':''}>${t}</option>`).join('')}</select></label>
+    <label class="f">事件类型<select id="p_type">${['课堂纪律','同伴矛盾','安全磕碰','情绪问题','作业问题','行为习惯','其他'].map(t=>`<option ${r.eventType===t?'selected':''}>${t}</option>`).join('')}</select></label>
+    <label class="f">和家长沟通情况<select id="p_comm">${['未沟通','已微信','已电话','已面谈'].map(t=>`<option ${r.parentComm===t?'selected':''}>${t}</option>`).join('')}</select></label>
+    <label class="f">记录人<input type="text" id="p_recorder" value="${esc(r.recorder)}" placeholder="班主任"></label>
+    <label class="f full">事件经过（客观写实）*<textarea id="p_process" placeholder="时间、地点、经过、涉及人员。例：第三节课间，X同学与Y同学在走廊奔跑碰撞，X同学膝盖轻微擦伤，已送校医室处理。">${esc(r.process)}</textarea></label>
+    <label class="f full">现场处理措施<textarea id="p_handling" style="min-height:48px" placeholder="如：分别与学生谈话了解情况，双方互相道歉；通知校医查看伤口并贴创可贴">${esc(r.handling)}</textarea></label>
+    <label class="f full">家长反馈<textarea id="p_fb" style="min-height:44px">${esc(r.parentFeedback)}</textarea></label>
+    <label class="f full">后续跟进计划<textarea id="p_plan" style="min-height:44px" placeholder="如：本周五班会强调课间安全；连续三天观察课间行为">${esc(r.followPlan)}</textarea></label>
+  </div>
+  ${id&&r.followUps&&r.followUps.length?`<div style="margin-top:14px;border-top:1px dashed var(--border);padding-top:10px">
+    <div style="font-size:13px;font-weight:600;margin-bottom:8px">🕐 跟进复查记录（时间线）</div>
+    <div class="timeline">${r.followUps.map(f=>`<div class="tl-item"><b>${f.date}</b> · ${esc(f.text)}</div>`).join('')}</div></div>`:''}
+  ${id?`<div style="margin-top:12px;display:flex;gap:8px">
+    <input type="date" id="fu_date" value="${today()}" style="flex:0 0 140px">
+    <input type="text" id="fu_text" placeholder="填写跟进复查内容，回车或点按钮追加" style="flex:1">
+    <button class="btn btn-primary btn-sm" onclick="addFollowUp('${id}')">＋ 追加跟进</button></div>
+    <p style="font-size:11px;color:var(--sub);margin-top:6px">⚠️ 问题记录按留痕要求<b>不支持删除</b>，如有笔误请直接编辑内容并注明修改说明</p>`:''}
+  <div class="modal-foot"><button class="btn btn-plain" onclick="closeModal()">取消</button><button class="btn btn-primary" onclick="saveProblem('${id||''}')">保存</button></div>`);
+}
+function addFollowUp(id){
+  const text=$('fu_text').value.trim();
+  if(!text){alert('请填写跟进复查内容');return}
+  const r=DB.problems.find(x=>x.id===id);
+  r.followUps.push({date:$('fu_date').value||today(),text});
+  save();openProblem(id);toast('跟进记录已追加');
+}
+function saveProblem(id){
+  const studentId=$('p_stu').value,process=$('p_process').value.trim();
+  if(!studentId){alert('请选择关联学生');return}
+  if(!process){alert('请客观填写事件经过');return}
+  const data={studentId,date:$('p_date').value,period:$('p_period').value,eventType:$('p_type').value,process,
+    handling:$('p_handling').value.trim(),parentComm:$('p_comm').value,parentFeedback:$('p_fb').value.trim(),
+    followPlan:$('p_plan').value.trim(),recorder:$('p_recorder').value.trim()||'班主任'};
+  if(id)Object.assign(DB.problems.find(x=>x.id===id),data);
+  else DB.problems.push({id:uid(),followUps:[],...data});
+  save();closeModal();renderRecords();renderDash();toast('问题留痕已保存（仅可编辑补充，不可删除）');
+}
+function renderRecords(){
+  initRecFilters();
+  const fs=$('recFilterStu').value,ft=$('recFilterType').value,fp=$('recFilterParent').value,kw=($('recSearch').value||'').trim();
+  const sort=$('recSort').value;
+  let list;
+  if(recTab==='g'){
+    list=DB.growth.filter(r=>{
+      if(fs&&r.studentId!==fs)return false;
+      if(ft&&r.type!==ft)return false;
+      if(kw&&!(r.content+ (r.comment||'')).includes(kw))return false;
+      return true;
+    });
+    list.sort((a,b)=>sort==='asc'?a.date.localeCompare(b.date):b.date.localeCompare(a.date));
+    $('recList').innerHTML=list.length?list.map(r=>{
+      const s=stuById(r.studentId);
+      return `<div class="rec-card positive">
+        <div class="rec-head"><span class="who" onclick="openStudentDetail('${r.studentId}')">${esc(s?s.name:'（已删档案）')}</span>
+          <span class="type-chip">${esc(r.type)}</span><span style="font-size:12px;color:var(--sub)">${r.date}</span>
+          <span class="type-chip" style="background:${r.notifiedParent?'var(--teal-l);color:var(--teal)':'var(--red-l);color:var(--red)'};margin-left:auto">${r.notifiedParent?'已告知家长'+(r.notifyWay?'（'+r.notifyWay+'）':''):'未告知家长'}</span></div>
+        <div class="rec-body">${esc(r.content)}</div>
+        ${r.comment?`<div class="rec-fields">💬 班主任评语：${esc(r.comment)}</div>`:''}
+        <div class="rec-actions"><button class="btn btn-plain btn-sm" onclick="openGrowth('${r.id}')">编辑</button></div>
+      </div>`}).join(''):'<div class="empty">暂无表现记录<br>建议多用正向记录，点击右上角「新增表现记录」</div>';
+  }else{
+    list=DB.problems.filter(r=>{
+      if(fs&&r.studentId!==fs)return false;
+      if(ft&&r.eventType!==ft)return false;
+      if(fp==='no'&&r.parentComm!=='未沟通')return false;
+      if(fp==='yes'&&r.parentComm==='未沟通')return false;
+      if(kw&&!(r.process+(r.handling||'')+(r.parentFeedback||'')+(r.followPlan||'')).includes(kw))return false;
+      return true;
+    });
+    list.sort((a,b)=>sort==='asc'?a.date.localeCompare(b.date):b.date.localeCompare(a.date));
+    $('recList').innerHTML=list.length?list.map(r=>{
+      const s=stuById(r.studentId);
+      const unf=!r.followUps||!r.followUps.length;
+      return `<div class="rec-card">
+        <div class="rec-head"><span class="who" onclick="openStudentDetail('${r.studentId}')">${esc(s?s.name:'（已删档案）')}</span>
+          <span class="type-chip" style="background:var(--orange-l);color:var(--orange)">${esc(r.eventType)}</span>
+          <span style="font-size:12px;color:var(--sub)">${r.date} · ${esc(r.period)}</span>
+          ${unf?'<span class="type-chip" style="background:var(--red-l);color:var(--red);margin-left:auto">未跟进</span>':`<span class="type-chip" style="background:var(--teal-l);color:var(--teal);margin-left:auto">已跟进${r.followUps.length}次</span>`}</div>
+        <div class="rec-body">${esc(r.process)}</div>
+        <div class="rec-fields">
+          ${r.handling?`🛠 现场处理：${esc(r.handling)}<br>`:''}
+          👪 家长沟通：<b>${esc(r.parentComm)}</b>${r.parentFeedback?` · 家长反馈：${esc(r.parentFeedback)}`:''}<br>
+          ${r.followPlan?`📌 跟进计划：${esc(r.followPlan)}`:''}
+          <br>记录人：${esc(r.recorder)}
+        </div>
+        ${r.followUps&&r.followUps.length?`<div class="timeline">${r.followUps.map(f=>`<div class="tl-item"><b>${f.date}</b> · ${esc(f.text)}</div>`).join('')}</div>`:''}
+        <div class="rec-actions"><button class="btn btn-plain btn-sm" onclick="openProblem('${r.id}')">查看 / 补充跟进</button></div>
+      </div>`}).join(''):'<div class="empty">暂无问题留痕记录</div>';
+  }
+}
+
+/* ================= 备份 / 示例数据 ================= */
+function exportData(){
+  const blob=new Blob([JSON.stringify(DB,null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download=`班主任工作台备份_${today()}.json`;a.click();
+}
+function importData(input){
+  const f=input.files[0];if(!f)return;
+  const rd=new FileReader();
+  rd.onload=()=>{try{const d=JSON.parse(rd.result);if(!d.students)throw 0;DB=Object.assign({students:[],seats:{},seatLogs:[],todos:[],growth:[],problems:[]},d);save();renderAll();toast('备份已恢复')}catch(e){alert('文件格式不正确，请选择本工作台导出的备份文件')}};
+  rd.readAsText(f);input.value='';
+}
+function clearAll(){
+  if(!confirm('⚠️ 确定清空全部数据吗？\n建议先导出备份。此操作不可恢复（清空后可点"恢复备份"找回）。'))return;
+  DB={students:[],seats:{},seatLogs:[],todos:[],growth:[],problems:[]};save();renderAll();toast('已清空全部数据');
+}
+function loadDemo(){
+  const mk=(name,gender,no,phone,tags,focus)=>({id:uid(),name,gender,studentNo:no,parentPhone:phone,emergencyContact:phone,familyInfo:'',specialFocus:!!focus,tags,created:today()});
+  const names=[['王小明','男','01','',['调皮好动'],false],['李小红','女','02','',[],false],['张小虎','男','03','',['需要重点关注','视力保护'],true],['刘小婷','女','04','',['同桌互助'],false],['陈小乐','男','05','',[],false],['赵小雨','女','06','',['视力保护'],false],['孙小杰','男','07','',[],false],['周小悦','女','08','',[],false]];
+  names.forEach(n=>DB.students.push(mk(...n)));
+  DB.seats={'g1-a-1':DB.students[0].id,'g1-b-1':DB.students[3].id,'g1-a-2':DB.students[1].id,'g1-b-2':DB.students[2].id,'g2-a-1':DB.students[4].id,'g2-b-1':DB.students[5].id,'g2-a-2':DB.students[6].id,'g2-b-2':DB.students[7].id,'s1':null};
+  delete DB.seats['s1'];
+  const s1=DB.students[2],s2=DB.students[0];
+  DB.growth.push({id:uid(),studentId:s1.id,date:today(),type:'进步表扬',content:'今天语文课上主动举手朗读课文，声音响亮，全班同学给予掌声鼓励。',comment:'勇敢表达就是最大的进步，继续保持！',notifiedParent:true,notifyWay:'微信'});
+  DB.problems.push({id:uid(),studentId:s2.id,date:today(),period:'上午',eventType:'课堂纪律',process:'第三节课间，与同桌讲话影响周围同学休息，经提醒后停止。',handling:'课后单独谈话，说明纪律要求，学生表示愿意改正。',parentComm:'未沟通',parentFeedback:'',followPlan:'连续三天观察课堂表现，周五与家长简单沟通反馈',followUps:[],recorder:'班主任'});
+  DB.todos.push({id:uid(),title:'周五安全教育班会',due:today(),priority:'中',type:'班会准备',detail:'准备课间安全主题PPT',status:'未开始',repeat:'weekly',repeatWeek:5,completedAt:null});
+  DB.todos.push({id:uid(),title:'收齐秋季运动会回执单',due:today(),priority:'高',type:'资料上交',detail:'',status:'进行中',repeat:'none',completedAt:null});
+  DB.seatLogs.push({id:uid(),date:today(),student:'张小虎',reason:'视力保护',from:'2组-右列-1排',to:'1组-右列-1排',note:'家长反映看不清黑板，调至前排'});
+  save();renderAll();toast('示例数据已载入，可体验各模块功能');
+}
+function renderAll(){renderDash();renderSeats();renderTodos();renderStudents();renderRecords()}
+
+/* ================= 启动 ================= */
+renderAll();
+</script>
+<script>
+/* Portfolio demo adapter: deterministic local mock, NOT a language model.
+   Never sends data over network or attempts to call /api/ai-todo. */
+window.aiParse = async function () {
+  const source = document.getElementById('ai_text').value.trim();
+  if (!source) { alert('请输入待办描述'); return; }
+  document.getElementById('ai_cards').innerHTML = '';
+  const chunks = source.split(/[，,；;。\n]/).map(x => x.trim()).filter(Boolean).slice(0,8);
+  const base = new Date(); base.setHours(12,0,0,0);
+  const toYmd = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  const tasks = chunks.map((raw) => {
+    let due = null, reason = '未识别到明确日期，请人工确认截止时间';
+    const offset = /后天/.test(raw)?2:/明天/.test(raw)?1:/今天/.test(raw)?0:null;
+    if (offset !== null) { const d = new Date(base); d.setDate(d.getDate()+offset); due=toYmd(d); reason=''; }
+    const exact=raw.match(/(20\d{2})[-\/]([01]?\d)[-\/]([0-3]?\d)/);
+    if(exact){ const y=+exact[1],m=+exact[2],d=+exact[3]; const v=new Date(y,m-1,d,12); if(v.getFullYear()===y&&v.getMonth()===m-1&&v.getDate()===d){due=toYmd(v);reason='';} }
+    if(!due && /周[一二三四五六日天]/.test(raw)) reason='包含相对星期，请人工确认对应的具体日期';
+    const title = raw.replace(/^(今天|明天|后天)(上午|下午|晚上)?/, '').replace(/^(本周|下周)?周[一二三四五六日天]前?/, '').trim()||raw;
+    return {include:true,title,due,priority:/(紧急|尽快|重要|必须)/.test(raw)?'高':'中',type:/(家长|家校)/.test(raw)?'家校沟通':/(上交|材料|回执)/.test(raw)?'资料上交':'其他',needsConfirm:!due,confirmReason:reason};
+  });
+  aiTasks=tasks;
+  aiSetState('ok',`规则模拟已拆分 ${tasks.length} 条任务（未调用 AI 模型）。请逐项检查并编辑后保存。`);
+  renderAiCards();
+};
+</script>
+</body>
+</html>
